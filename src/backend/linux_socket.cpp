@@ -5,6 +5,10 @@ namespace bs::linux
 	int linuxSocketService::AddSocket()
 	{
 		int new_socket = socket(AF_INET,SOCK_STREAM,0);
+
+		int opt = 1;
+    	setsockopt(new_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+
 		m_sockets.emplace_back(new_socket);
 
 		return m_sockets.size() - 1;
@@ -32,7 +36,66 @@ namespace bs::linux
     	return host;
 	}
 
+	std::unordered_map<std::string, std::string> httpParser(std::string msg) {
+	    std::unordered_map<std::string, std::string> parsed;
+	    std::stringstream stream(msg);
+	    std::string line;
+	
+	    while (std::getline(stream, line)) {
 
+	        if (!line.empty() && line.back() == '\r') {
+	            line.pop_back();
+	        }
+	
+	        size_t pos = line.find("GET ");
+	        if (pos != std::string::npos) {
+	            std::string method, path;
+	            std::stringstream firstLine(line);
+	            firstLine >> method >> path;
+	            
+	            parsed["path"] = path;
+	            parsed["method"] = method;
+	            
+	            std::cout << path << "\n";
+	        }
+	        
+	        size_t delim = line.find(": ");
+	        if (delim != std::string::npos) {
+	            std::string key = line.substr(0, delim);
+	            std::string value = line.substr(delim + 2);
+	            parsed[key] = value;
+	        }
+	    }
+	
+	    return parsed;
+	}
+
+	void linuxSocketService::test(int socketID)
+	{
+		while (true)
+		{
+			int client_socket = accept(m_sockets.at(socketID),nullptr,nullptr);
+
+			char buffer[4096];
+
+			recv(client_socket,buffer,sizeof(buffer),0);
+
+			auto parsed = httpParser(std::string(buffer));
+
+			for (auto listener : m_socketFunctions[socketID])
+			{
+				if (parsed["path"] == listener.path)
+				{
+					ListenBlock block;
+					block.clientSocket = client_socket;
+					block.parsed = parsed;
+					listener.func(block);
+				}
+			}
+
+			close(client_socket);
+		}
+	}
 
 	std::pair<addrinfo*, std::string> compileAddress(const char* url, const char* port, bool ipv4)
 	{
@@ -52,6 +115,21 @@ namespace bs::linux
 	    }
 	    
 	    return {res, stripped};
+	}
+
+	void linuxSocketService::Bind(int socketID, int port)
+	{
+		sockaddr_in address;
+		address.sin_family = AF_INET;
+		address.sin_addr.s_addr = INADDR_ANY;
+		address.sin_port = htons(port);
+
+		bind(m_sockets.at(socketID), (sockaddr*)&address, sizeof(address));
+	}
+
+	void linuxSocketService::Listen(int socketID)
+	{
+		listen(m_sockets.at(socketID),3);
 	}
 
 	std::string linuxSocketService::Connect(int socketID, const char* domain, const char* port, bool ipv4)
@@ -82,5 +160,15 @@ namespace bs::linux
 	{
 		shutdown(m_sockets.at(socketID), SHUT_RDWR);
 		close(m_sockets.at(socketID));
+	}
+
+	void linuxSocketService::AddListener(int socketID,std::string path ,int method,std::function<void(ListenBlock)> func)
+	{
+		m_socketFunctions[socketID].emplace_back(path,func);
+	}
+
+	void linuxSocketService::Send(int clientSocket,std::string msg)
+	{
+		send(clientSocket,msg.c_str(),msg.length() * sizeof(char),0);
 	}
 }

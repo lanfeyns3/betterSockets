@@ -55,4 +55,46 @@ namespace bs
 		linux::linuxSocketService::GetInstance().Request(socketID,request);
 		#endif
 	}
+
+	void Bind(int socketID)
+	{
+		#ifdef __linux__
+		linux::linuxSocketService::GetInstance().Bind(socketID,8080);
+		#endif
+	}
+
+	void Listen(int socketID)
+	{
+		#ifdef __linux__
+		linux::linuxSocketService::GetInstance().Listen(socketID);
+		#endif
+	}
+
+	void testRun(int socketID)
+	{
+		linux::linuxSocketService::GetInstance().test(socketID);
+	}
+
+	void AddListener(int socketID,std::string path ,int method,std::function<void(ListenBlock)> func)
+	{
+		#ifdef __linux__
+		linux::linuxSocketService::GetInstance().AddListener(socketID,path,method,func);
+		#endif
+	}
+
+	void Send(int clientSocket, std::string response,std::string contentType,int statusCode,std::string statusMsg)
+	{
+		std::string msg = "HTTP/1.1 " + std::to_string(statusCode) + " " + statusMsg + "\r\n";
+		
+		msg += "Content-Type: " + contentType + "\r\n";
+		msg += "Content-Length: " + std::to_string(response.length()) + "\r\n";
+		msg += "Connection: close\r\n";
+		msg += "\r\n";
+		
+		msg += response;
+		
+		#ifdef __linux__
+		linux::linuxSocketService::GetInstance().Send(clientSocket, msg);
+		#endif
+	}
 }

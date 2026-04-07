@@ -4,11 +4,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSION OFF)
 
-project(better_sockets)
-
-add_subdirectory(./test/server/)
+project(server)
 
 file(GLOB_RECURSE FILES src/**.cpp)
 
-add_library(BetterSockets STATIC ${FILES})
-target_include_directories(BetterSockets PUBLIC ./include/)
+add_executable(server ${FILES})
+target_link_libraries(server PRIVATE BetterSockets)

@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <unordered_map>
 
 namespace bs
 {
@@ -20,7 +21,16 @@ namespace bs
 		RequestType rtype;
 		bool isHttps = false;
 	};
+
+	void Send(int clientSocket, std::string response,std::string contentType,int statusCode,std::string statusMsg);
+	void Bind(int socketID);
+	void Listen(int socketID);
+
+	void testRun(int socketID);
+
 	int AddSocket();
+	void AddListener(int socketID,std::string path ,int method,std::function<void(ListenBlock)> func);
+
 	std::string GenerateRequest(RequestBlock requestBlock);
 
 	std::string Connect(int socketID,std::string domain, std::string port, bool ipv4);
