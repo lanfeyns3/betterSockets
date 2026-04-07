@@ -69,10 +69,15 @@ namespace bs::linux
 	
 	    return parsed;
 	}
-
-	void linuxSocketService::test(int socketID)
+	void linuxSocketService::StopSocket(int socketID)
 	{
-		while (true)
+		m_socketThreads[socketID] = false;
+	}
+
+	void linuxSocketService::RunSocket(int socketID)
+	{
+		m_socketThreads[socketID] = true;
+		while (m_socketThreads[socketID])
 		{
 			int client_socket = accept(m_sockets.at(socketID),nullptr,nullptr);
 
@@ -92,8 +97,7 @@ namespace bs::linux
 					listener.func(block);
 				}
 			}
-
-			close(client_socket);
+			
 		}
 	}
 

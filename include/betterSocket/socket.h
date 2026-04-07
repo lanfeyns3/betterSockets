@@ -26,7 +26,8 @@ namespace bs
 	void Bind(int socketID);
 	void Listen(int socketID);
 
-	void testRun(int socketID);
+	std::thread RunSocket(int socketID);
+	void StopSocket(int socketID);
 
 	int AddSocket();
 	void AddListener(int socketID,std::string path ,int method,std::function<void(ListenBlock)> func);

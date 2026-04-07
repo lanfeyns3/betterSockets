@@ -70,9 +70,19 @@ namespace bs
 		#endif
 	}
 
-	void testRun(int socketID)
+	std::thread RunSocket(int socketID)
 	{
-		linux::linuxSocketService::GetInstance().test(socketID);
+		#ifdef __linux__
+		std::thread t(&linux::linuxSocketService::RunSocket, &linux::linuxSocketService::GetInstance(), socketID);
+		return t;
+		#endif
+	}
+
+	void StopSocket(int socketID)
+	{
+		#ifdef __linux__
+		linux::linuxSocketService::GetInstance().StopSocket(socketID);
+		#endif
 	}
 
 	void AddListener(int socketID,std::string path ,int method,std::function<void(ListenBlock)> func)

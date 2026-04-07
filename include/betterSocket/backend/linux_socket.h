@@ -15,6 +15,7 @@
 #include <string>
 #include <utility>
 #include <sstream>
+#include <thread>
 
 #include <iostream>
 
@@ -45,7 +46,8 @@ namespace bs::linux
         std::string Connect(int socketID, const char* domain, const char* port, bool ipv4);
         void Listen(int socketID);
 
-        void test(int socketID);
+        void RunSocket(int socketID);
+        void StopSocket(int socketID);
 
         void AddListener(int socketID,std::string path ,int method,std::function<void(ListenBlock)> func);
 
@@ -72,6 +74,7 @@ namespace bs::linux
     private:
     	std::vector<int> m_sockets;
         std::unordered_map<int, std::vector<linuxListener>> m_socketFunctions;
+        std::unordered_map<int,bool> m_socketThreads;
     };
 }
 

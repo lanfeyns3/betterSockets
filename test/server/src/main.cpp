@@ -1,5 +1,6 @@
 #include <betterSocket/socket.h>
 #include <fstream>
+#include <vector>
 
 int main()
 {
@@ -8,26 +9,18 @@ int main()
     bs::Bind(socketID);
     bs::Listen(socketID);
 
-
-    std::string html;
-    std::fstream file("./index.html");
-
-    std::string line;
-
-    while(std::getline(file,line))
-    {
-        html += line;
-    }
-
-    bs::AddListener(socketID,"/banking",bs::RequestType::GET,[&](bs::ListenBlock block) {
-        bs::Send(block.clientSocket,html,"text/html",200,"OK");
-    });
-
     bs::AddListener(socketID,"/",bs::RequestType::GET,[](bs::ListenBlock block) {
         bs::Send(block.clientSocket,"Hello, World!","text/text",200,"OK");
     });
 
-    bs::testRun(socketID);
+    std::vector<std::thread> threads;
+
+    threads.emplace_back(bs::RunSocket(socketID));
+
+    for (auto& thread : threads)
+    {
+        thread.join();
+    }
     
     bs::CloseSocket(socketID);
 }
